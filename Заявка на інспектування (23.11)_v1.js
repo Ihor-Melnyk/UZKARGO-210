@@ -1,8 +1,8 @@
 function setPropertyRequired(code, required = true) {
   const control = EdocsApi.getControlProperties(code);
-  if(control){
-  control.required = required;
-  EdocsApi.setControlProperties(control);
+  if (control) {
+    control.required = required;
+    EdocsApi.setControlProperties(control);
   }
 }
 
@@ -11,11 +11,13 @@ function setPropertyHidden(code, hidden = true) {
   control.hidden = hidden;
   EdocsApi.setControlProperties(control);
 }
+
 function setPropertyDisabled(code, disabled = true) {
   const control = EdocsApi.getControlProperties(code);
   control.disabled = disabled;
   EdocsApi.setControlProperties(control);
 }
+
 function setValueAttr(code, value) {
   const attr = EdocsApi.getAttributeValue(code);
   attr.value = value;
@@ -33,10 +35,7 @@ function onTaskExecuteMainTask(routeStage) {
 function onTaskExecuteSendOutDoc(routeStage) {
   debugger;
   if (routeStage.executionResult == "executed") {
-    if (
-      !EdocsApi.getAttributeValue("RegDate").value ||
-      !EdocsApi.getAttributeValue("RegNumber").value
-    ) {
+    if (!EdocsApi.getAttributeValue("RegDate").value || !EdocsApi.getAttributeValue("RegNumber").value) {
       throw "Спочатку зареєструйте документ!";
     }
   }
@@ -58,8 +57,7 @@ function sendCommand(routeStage) {
     extSysDocVersion: CurrentDocument.version,
     command: command,
     legalEntityCode: EdocsApi.getAttributeValue("HomeOrgEDRPOU").value,
-    userEmail: EdocsApi.getEmployeeDataByEmployeeID(CurrentUser.employeeId)
-      .email,
+    userEmail: EdocsApi.getEmployeeDataByEmployeeID(CurrentUser.employeeId).email,
     userTitle: CurrentUser.fullName,
     comment: comment,
     signatures: signatures,
@@ -90,11 +88,7 @@ function sendComment(comment) {
     partyName: orgShortName,
     occuredAt: new Date(),
   };
-  EdocsApi.runExternalFunction(
-    "ESIGN1",
-    "integration/processEvent",
-    methodData
-  );
+  EdocsApi.runExternalFunction("ESIGN1", "integration/processEvent", methodData);
 }
 
 //Скрипт 2. Зміна властивостей атрибутів при створені документа
@@ -151,23 +145,17 @@ function onCardInitialize() {
   setInitialDisabled();
   CreateAccountTask();
   calculationRequestAmount();
+  ConfirmRequestTask();
 }
 
 function setInitialDisabled() {
   debugger;
   //при переносі на прод прибрати наступні 2 строки
   const dateStartTestingClients = new Date(2023, 8, 22);
-  if (
-    dateStartTestingClients <
-    new Date(EdocsApi.getAttributeValue("RegDate").value)
-  ) {
-    const stateTaskSendOutDoc =
-      EdocsApi.getCaseTaskDataByCode("SendOutDoc")?.state;
+  if (dateStartTestingClients < new Date(EdocsApi.getAttributeValue("RegDate").value)) {
+    const stateTaskSendOutDoc = EdocsApi.getCaseTaskDataByCode("SendOutDoc")?.state;
     const stateTaskMainTask = EdocsApi.getCaseTaskDataByCode("MainTask").state;
-    if (
-      stateTaskSendOutDoc == "completed" ||
-      stateTaskMainTask == "rejected"
-    ) {
+    if (stateTaskSendOutDoc == "completed" || stateTaskMainTask == "rejected") {
       controlDisabled("DataInspection");
       controlDisabled("Comment");
       controlDisabled("NumberLocomotive");
@@ -231,8 +219,7 @@ function calculationRequestAmount() {
     attrVATAmount.value = 0;
     attrAmountOutVAT.value = attrContractAmount.value;
   } else {
-    attrAmountOutVAT.value =
-      Math.floor((100 * attrContractAmount.value) / VATpercentage) / 100;
+    attrAmountOutVAT.value = Math.floor((100 * attrContractAmount.value) / VATpercentage) / 100;
     attrVATAmount.value = attrContractAmount.value - attrAmountOutVAT.value;
   }
 
@@ -250,38 +237,18 @@ function onChangeRequestVATPerecent() {
 
 function setContractorOnCreate(portalData) {
   debugger;
-  const code = portalData.tableAttributes
-    .filter((x) => x.code == "LegalEntityCode")
-    .map((y) => y.value)[0];
+  const code = portalData.tableAttributes.filter((x) => x.code == "LegalEntityCode").map((y) => y.value)[0];
 
   try {
     const conInfo = EdocsApi.getContractorByCode(code, "debtor");
     debugger;
     if (conInfo) {
-      EdocsApi.setAttributeValue({
-        code: "ContractorId",
-        value: conInfo.contractorId,
-      });
-      EdocsApi.setAttributeValue({
-        code: "ContractorShortName",
-        value: conInfo.shortName,
-      });
-      EdocsApi.setAttributeValue({
-        code: "ContractorFullName",
-        value: conInfo.fullName,
-      });
-      EdocsApi.setAttributeValue({
-        code: "EDRPOUContractor",
-        value: conInfo.code,
-      });
-      EdocsApi.setAttributeValue({
-        code: "ContractorIPN",
-        value: conInfo.taxId,
-      });
-      EdocsApi.setAttributeValue({
-        code: "LegaladdressContractor",
-        value: conInfo.legalAddress,
-      });
+      EdocsApi.setAttributeValue({ code: "ContractorId", value: conInfo.contractorId });
+      EdocsApi.setAttributeValue({ code: "ContractorShortName", value: conInfo.shortName });
+      EdocsApi.setAttributeValue({ code: "ContractorFullName", value: conInfo.fullName });
+      EdocsApi.setAttributeValue({ code: "EDRPOUContractor", value: conInfo.code });
+      EdocsApi.setAttributeValue({ code: "ContractorIPN", value: conInfo.taxId });
+      EdocsApi.setAttributeValue({ code: "LegaladdressContractor", value: conInfo.legalAddress });
     }
   } catch (e) {
     EdocsApi.message(e);
@@ -289,9 +256,7 @@ function setContractorOnCreate(portalData) {
 }
 
 function onCreate() {
-  setContractorOnCreate(
-    EdocsApi.getInExtAttributes(CurrentDocument.id.toString())
-  );
+  setContractorOnCreate(EdocsApi.getInExtAttributes(CurrentDocument.id.toString()));
   setContractorOnCreateEsign();
   setContractorHome();
   //calculationRequestAmount();
@@ -303,9 +268,7 @@ function setContractorOnCreateEsign() {
     const data = EdocsApi.getInExtAttributes(CurrentDocument.id.toString());
     EdocsApi.setAttributeValue({
       code: "ContractorRPEmail",
-      value: data.tableAttributes
-        .filter((x) => x.code == "ContactPersonEmail")
-        .map((y) => y.value)[0],
+      value: data.tableAttributes.filter((x) => x.code == "ContactPersonEmail").map((y) => y.value)[0],
     });
   } catch (e) {
     EdocsApi.setAttributeValue({ code: "ContractorRPEmail", value: "" });
@@ -315,22 +278,14 @@ function setContractorOnCreateEsign() {
 function setContractorHome() {
   debugger;
   try {
-    const code = EdocsApi.getInExtAttributes(
-      CurrentDocument.id.toString()
-    ).attributeValues.find((x) => x.code == "HomeOrgEDRPOU").value;
+    const code = EdocsApi.getInExtAttributes(CurrentDocument.id.toString()).attributeValues.find((x) => x.code == "HomeOrgEDRPOU").value;
     const data = EdocsApi.getContractorByCode(code, "homeOrganization");
-    EdocsApi.setAttributeValue({
-      code: "OrganizationId",
-      value: data.contractorId,
-    });
+    EdocsApi.setAttributeValue({ code: "OrganizationId", value: data.contractorId });
     EdocsApi.setAttributeValue({ code: "HomeName", value: data.fullName });
     EdocsApi.setAttributeValue({ code: "OrgShortName", value: data.shortName });
     EdocsApi.setAttributeValue({ code: "OrgCode", value: code });
     EdocsApi.setAttributeValue({ code: "HomeOrgIPN", value: data.taxId });
-    EdocsApi.setAttributeValue({
-      code: "LegaladdressOrg",
-      value: data.legalAddress,
-    });
+    EdocsApi.setAttributeValue({ code: "LegaladdressOrg", value: data.legalAddress });
   } catch (e) {
     EdocsApi.setAttributeValue({ code: "OrganizationId", value: "" });
     EdocsApi.setAttributeValue({ code: "HomeName", value: "" });
@@ -344,11 +299,7 @@ function setContractorHome() {
 function CreateAccountTask() {
   debugger;
   var stateTask = EdocsApi.getCaseTaskDataByCode("CreateAccount").state;
-  if (
-    stateTask == "assigned" ||
-    stateTask == "inProgress" ||
-    stateTask == "delegated"
-  ) {
+  if (stateTask == "assigned" || stateTask == "inProgress" || stateTask == "delegated") {
     setPropertyRequired("DateContract");
     setPropertyRequired("NumberContract");
     setPropertyRequired("edocsDocSum");
@@ -382,15 +333,7 @@ function onTaskExecuteCreateAccount(routeStage) {
   debugger;
   if (routeStage.executionResult == "executed") {
     sendCommand(routeStage);
-    sendComment(
-      `Ваш заявка прийнята та зареєстрована за № ${
-        EdocsApi.getAttributeValue("RegNumber").value
-      } від ${moment(
-        new Date(EdocsApi.getAttributeValue("RegDate").value)
-      ).format("DD.MM.YYYY")}на суму ${
-        EdocsApi.getAttributeValue("edocsDocSum").value
-      } грн.`
-    );
+    sendComment(`Ваш заявка прийнята та зареєстрована за № ${EdocsApi.getAttributeValue("RegNumber").value} від ${moment(new Date(EdocsApi.getAttributeValue("RegDate").value)).format("DD.MM.YYYY")}на суму ${EdocsApi.getAttributeValue("edocsDocSum").value} грн.`);
   }
 }
 
@@ -420,4 +363,33 @@ function onTaskCommentedSendOutDoc(caseTaskComment) {
     data: methodData, // дані, що очікує зовнішня система для заданого методу
     executeAsync: true, // виконувати завдання асинхронно
   };
+}
+
+function ConfirmRequestTask() {
+  debugger;
+  var stateTask = EdocsApi.getCaseTaskDataByCode("ConfirmRequest")?.state;
+  if (stateTask == "assigned" || stateTask == "inProgress" || stateTask == "delegated") {
+    setPropertyRequired("StatusRequest");
+    setPropertyDisabled("StatusRequest", false);
+  } else if (stateTask == "completed") {
+    setPropertyRequired("StatusRequest");
+    setPropertyDisabled("StatusRequest");
+  } else {
+    setPropertyRequired("StatusRequest", false);
+    setPropertyDisabled("StatusRequest", false);
+  }
+}
+
+function onTaskExecuteConfirmRequest(routeStage) {
+  debugger;
+  if (routeStage.executionResult == "executed") {
+    if (!EdocsApi.getAttributeValue("StatusRequest").value) throw `Внесіть значення в поле "Статус виконання заявки на інспектування"`;
+  }
+}
+
+function onTaskExecutedCreateAccount(routeStage) {
+  debugger;
+  if (routeStage.executionResult == "executed") {
+    ConfirmRequestTask();
+  }
 }
